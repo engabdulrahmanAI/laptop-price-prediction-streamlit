@@ -610,16 +610,10 @@ def train_models(df):
 
     preferred_key = "Random Forest (Raw Target)"
 
-    if preferred_key in trained:
-        best_key = preferred_key
-    else:
-        stable_models = ["Random Forest", "Extra Trees", "Gradient Boosting"]
-        stable_results = results_df[results_df["Model"].isin(stable_models)].copy()
-        if not stable_results.empty:
-            best_key = stable_results.iloc[0]["Key"]
-        else:
-            best_key = results_df.iloc[0]["Key"]
+    if preferred_key not in trained:
+        raise ValueError("Random Forest (Raw Target) was not trained correctly.")
 
+    best_key = preferred_key
     best = trained[best_key]
     best_row = results_df[results_df["Key"] == best_key].iloc[0]
 
@@ -1227,8 +1221,10 @@ elif page == "🤖 Model Training":
 
     display_df = results_df[["Model", "Target", "MAE", "RMSE", "R2 Score"]].copy()
 
+    selected_index = results_df.index[results_df["Key"] == artifacts["best_key"]].tolist()[0]
+
     def highlight_best(row):
-        if row.name == 0:
+        if row.name == selected_index:
             return ["background-color: rgba(229,9,20,0.18)"] * len(row)
         return [""] * len(row)
 
@@ -1311,9 +1307,10 @@ elif page == "🤖 Model Training":
 elif page == "🎯 Prediction Simulator":
     st.markdown("## 🎯 Prediction Simulator")
     st.markdown(
-        f"This simulator uses the best trained model: "
+        f"This simulator uses a stable prediction model: "
         f"**{artifacts['best_model_name']} ({artifacts['best_target']} target)**."
     )
+    st.info(f"Model currently used for prediction: {artifacts['best_key']}")
 
     required_prediction_columns = [
         "Company",
@@ -1423,7 +1420,7 @@ elif page == "🎯 Prediction Simulator":
             st.markdown(
                 f"""
                 <div class="pred-card">
-                    <div class="label">Estimated Laptop Price</div>
+                    <div class="label">Estimated Dataset Price</div>
                     <div class="price">{prediction:,.2f}</div>
                     <div class="modelname">
                         Predicted using {artifacts['best_model_name']} ({artifacts['best_target']} target)
