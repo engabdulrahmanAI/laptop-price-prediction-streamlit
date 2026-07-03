@@ -62,285 +62,321 @@ def style_plotly(fig):
 
 CUSTOM_CSS = """
 <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {background: transparent !important;}
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {background: transparent !important;}
 
-    html, body, [class*="css"] {
-        font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
-    }
+[data-testid="stAppViewContainer"],
+.stApp,
+.main,
+.block-container {
+    background-color: #0B0B0F !important;
+    color: #FFFFFF !important;
+}
 
-    [data-testid="stAppViewContainer"] {
-        background-color: #0B0B0F !important;
-        color: #FFFFFF !important;
-    }
+[data-testid="stHeader"] {
+    background-color: #0B0B0F !important;
+}
 
-    .stApp {
-        background-color: #0B0B0F !important;
-        color: #FFFFFF !important;
-    }
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+}
 
-    .main {
-        background-color: #0B0B0F !important;
-    }
+section[data-testid="stSidebar"] {
+    background-color: #111116 !important;
+    border-right: 1px solid #2A2A35 !important;
+}
 
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 3rem;
-        background-color: #0B0B0F !important;
-    }
+section[data-testid="stSidebar"] * {
+    color: #FFFFFF !important;
+}
 
-    [data-testid="stHeader"] {
-        background: #0B0B0F !important;
-    }
+h1, h2, h3, h4, h5, h6 {
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+}
 
-    [data-testid="stToolbar"] {
-        right: 1rem;
-    }
+p, span, label, li {
+    color: #D1D5DB !important;
+}
 
-    section[data-testid="stSidebar"] {
-        background-color: #0B0B0F !important;
-        border-right: 1px solid #2A2A35;
-    }
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li,
+[data-testid="stCaptionContainer"],
+.stCaption {
+    color: #D1D5DB !important;
+}
 
-    section[data-testid="stSidebar"] * {
-        color: #FFFFFF !important;
-    }
+.hero {
+    background: linear-gradient(135deg, #16161D 0%, #1F1F2A 60%, #2A0A0E 100%);
+    padding: 2.8rem 2.6rem;
+    border-radius: 16px;
+    margin-bottom: 1.6rem;
+    border: 1px solid #2A2A35;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.40);
+}
 
-    h1, h2, h3, h4, h5, h6 {
-        color: #FFFFFF !important;
-        font-weight: 800 !important;
-    }
+.hero h1 {
+    color: #FFFFFF !important;
+    font-size: 2.4rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
 
-    p, span, label {
-        color: #FFFFFF !important;
-    }
+.hero p {
+    color: #D1D5DB !important;
+    font-size: 1.05rem;
+    max-width: 850px;
+    line-height: 1.6;
+}
 
-    div, li {
-        color: #D1D5DB;
-    }
+.hero .tagline {
+    display: inline-block;
+    color: #E50914 !important;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.82rem;
+    margin-bottom: 0.8rem;
+}
 
-    [data-testid="stMarkdownContainer"] p,
-    [data-testid="stMarkdownContainer"] li,
-    [data-testid="stCaptionContainer"],
-    .stCaption {
-        color: #D1D5DB !important;
-    }
+.kpi-card,
+.section-card,
+.pred-card {
+    background: #16161D !important;
+    border: 1px solid #2A2A35 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+}
 
-    [data-testid="stTabs"] {
-        background-color: #0B0B0F !important;
-    }
+.kpi-card {
+    padding: 1.25rem 1.35rem;
+    min-height: 125px;
+}
 
-    [data-testid="stTabs"] button {
-        color: #D1D5DB !important;
-        background: transparent !important;
-    }
+.kpi-label {
+    color: #D1D5DB !important;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.35rem;
+    font-weight: 700;
+}
 
-    [data-testid="stTabs"] button[aria-selected="true"] {
-        color: #E50914 !important;
-        border-bottom: 2px solid #E50914 !important;
-    }
+.kpi-value {
+    color: #FFFFFF !important;
+    font-size: 1.65rem;
+    font-weight: 900;
+    line-height: 1.2;
+}
 
-    .stSelectbox label, .stSlider label, .stNumberInput label, .stTextInput label,
-    .stFileUploader label, .stRadio label, .stMultiSelect label {
-        color: #FFFFFF !important;
-        font-weight: 700;
-    }
+.kpi-sub {
+    color: #E50914 !important;
+    font-size: 0.8rem;
+    margin-top: 0.35rem;
+    font-weight: 700;
+}
 
-    div[data-baseweb="select"] > div,
-    div[data-testid="stNumberInput"] input,
-    div[data-testid="stTextInput"] input,
-    textarea {
-        background-color: #16161D !important;
-        color: #FFFFFF !important;
-        border: 1px solid #2A2A35 !important;
-    }
+.section-card {
+    padding: 1.5rem 1.6rem;
+    margin-bottom: 1rem;
+    line-height: 1.8;
+}
 
-    .stButton > button, .stFormSubmitButton > button {
-        background-color: #E50914 !important;
-        color: #FFFFFF !important;
-        border: none !important;
-        border-radius: 8px;
-        font-weight: 800;
-        padding: 0.65rem 1rem;
-    }
+.section-card,
+.section-card * {
+    color: #D1D5DB !important;
+}
 
-    .stButton > button:hover, .stFormSubmitButton > button:hover {
-        background-color: #B20710 !important;
-        color: #FFFFFF !important;
-    }
+.section-card b {
+    color: #FFFFFF !important;
+}
 
-    div[data-testid="stMetric"] {
-        background: #16161D;
-        border: 1px solid #2A2A35;
-        padding: 1rem;
-        border-radius: 12px;
-    }
+.chart-note {
+    color: #D1D5DB !important;
+    font-size: 0.92rem;
+    margin-top: 0.4rem;
+    margin-bottom: 1rem;
+}
 
-    div[data-testid="stMetricLabel"] {
-        color: #D1D5DB !important;
-    }
+.pred-card {
+    background: linear-gradient(135deg, #1F1F2A 0%, #2A0A0E 100%) !important;
+    padding: 2.2rem;
+    text-align: center;
+    border: 1px solid #E50914 !important;
+    box-shadow: 0 8px 25px rgba(229,9,20,0.20);
+}
 
-    div[data-testid="stMetricValue"] {
-        color: #FFFFFF !important;
-        font-weight: 800;
-    }
+.pred-card .price {
+    font-size: 2.8rem;
+    font-weight: 900;
+    color: #FFFFFF !important;
+}
 
-    div[data-testid="stMetricDelta"] {
-        color: #E50914 !important;
-    }
+.pred-card .label {
+    color: #D1D5DB !important;
+    font-size: 0.9rem;
+    margin-bottom: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
 
-    .hero {
-        background: linear-gradient(135deg, #16161D 0%, #1F1F2A 60%, #2A0A0E 100%);
-        padding: 2.8rem 2.6rem;
-        border-radius: 16px;
-        margin-bottom: 1.6rem;
-        border: 1px solid #2A2A35;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.40);
-    }
+.pred-card .modelname {
+    color: #E50914 !important;
+    font-weight: 800;
+    font-size: 0.95rem;
+    margin-top: 0.6rem;
+}
 
-    .hero h1 {
-        color: #FFFFFF !important;
-        font-size: 2.4rem;
-        font-weight: 800;
-        margin-bottom: 0.5rem;
-    }
+.badge {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    margin-right: 0.4rem;
+}
 
-    .hero p {
-        color: #D1D5DB !important;
-        font-size: 1.05rem;
-        max-width: 850px;
-        line-height: 1.6;
-    }
+.badge-best {
+    background: rgba(229, 9, 20, 0.15) !important;
+    color: #E50914 !important;
+    border: 1px solid #E50914 !important;
+}
 
-    .hero .tagline {
-        display: inline-block;
-        color: #E50914 !important;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        font-size: 0.82rem;
-        margin-bottom: 0.8rem;
-    }
+[data-testid="stTabs"] {
+    background-color: #0B0B0F !important;
+}
 
-    .kpi-card {
-        background: #16161D;
-        border: 1px solid #2A2A35;
-        border-radius: 12px;
-        padding: 1.25rem 1.35rem;
-        text-align: left;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-        min-height: 125px;
-    }
+[data-testid="stTabs"] button {
+    color: #D1D5DB !important;
+    background: transparent !important;
+}
 
-    .kpi-label {
-        color: #D1D5DB !important;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        margin-bottom: 0.35rem;
-        font-weight: 700;
-    }
+[data-testid="stTabs"] button[aria-selected="true"] {
+    color: #E50914 !important;
+    border-bottom: 2px solid #E50914 !important;
+}
 
-    .kpi-value {
-        color: #FFFFFF !important;
-        font-size: 1.65rem;
-        font-weight: 900;
-        line-height: 1.2;
-    }
+.stSelectbox label,
+.stSlider label,
+.stNumberInput label,
+.stTextInput label,
+.stFileUploader label,
+.stRadio label,
+.stMultiSelect label {
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
+}
 
-    .kpi-sub {
-        color: #E50914 !important;
-        font-size: 0.8rem;
-        margin-top: 0.35rem;
-        font-weight: 700;
-    }
+div[data-baseweb="select"] > div {
+    background-color: #16161D !important;
+    color: #FFFFFF !important;
+    border: 1px solid #2A2A35 !important;
+}
 
-    .section-card {
-        background: #16161D;
-        border: 1px solid #2A2A35;
-        border-radius: 12px;
-        padding: 1.5rem 1.6rem;
-        margin-bottom: 1rem;
-        color: #D1D5DB !important;
-        line-height: 1.8;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-    }
+div[data-baseweb="select"] input {
+    color: #FFFFFF !important;
+    background-color: #16161D !important;
+}
 
-    .section-card * {
-        color: #D1D5DB !important;
-    }
+div[data-baseweb="popover"],
+div[data-baseweb="popover"] div {
+    background-color: #16161D !important;
+    color: #FFFFFF !important;
+}
 
-    .section-card b {
-        color: #FFFFFF !important;
-    }
+ul[role="listbox"] {
+    background-color: #16161D !important;
+    color: #FFFFFF !important;
+    border: 1px solid #2A2A35 !important;
+}
 
-    .chart-note {
-        color: #D1D5DB !important;
-        font-size: 0.92rem;
-        margin-top: 0.4rem;
-        margin-bottom: 1rem;
-        padding-left: 0.1rem;
-    }
+ul[role="listbox"] li,
+ul[role="option"] {
+    background-color: #16161D !important;
+    color: #FFFFFF !important;
+}
 
-    .pred-card {
-        background: linear-gradient(135deg, #1F1F2A 0%, #2A0A0E 100%);
-        border-radius: 16px;
-        padding: 2.2rem;
-        text-align: center;
-        border: 1px solid #E50914;
-        box-shadow: 0 8px 25px rgba(229,9,20,0.20);
-    }
+li[role="option"] {
+    background-color: #16161D !important;
+    color: #FFFFFF !important;
+}
 
-    .pred-card .price {
-        font-size: 2.8rem;
-        font-weight: 900;
-        color: #FFFFFF !important;
-    }
+li[role="option"]:hover,
+li[role="option"][aria-selected="true"] {
+    background-color: #2A2A35 !important;
+    color: #FFFFFF !important;
+}
 
-    .pred-card .label {
-        color: #D1D5DB !important;
-        font-size: 0.9rem;
-        margin-bottom: 0.6rem;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-    }
+[data-testid="stFileUploaderDropzone"] {
+    background-color: #16161D !important;
+    color: #FFFFFF !important;
+    border: 1px solid #2A2A35 !important;
+}
 
-    .pred-card .modelname {
-        color: #E50914 !important;
-        font-weight: 800;
-        font-size: 0.95rem;
-        margin-top: 0.6rem;
-    }
+[data-testid="stFileUploaderDropzone"] * {
+    color: #FFFFFF !important;
+    background-color: transparent !important;
+}
 
-    .badge {
-        display: inline-block;
-        padding: 0.3rem 0.8rem;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        font-weight: 800;
-        margin-right: 0.4rem;
-    }
+input,
+textarea {
+    background-color: #16161D !important;
+    color: #FFFFFF !important;
+    border: 1px solid #2A2A35 !important;
+}
 
-    .badge-best {
-        background: rgba(229, 9, 20, 0.15);
-        color: #E50914 !important;
-        border: 1px solid #E50914;
-    }
+.stButton > button,
+.stFormSubmitButton > button {
+    background-color: #E50914 !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 800 !important;
+    padding: 0.65rem 1rem !important;
+}
 
-    div[data-testid="stDataFrame"] {
-        border: 1px solid #2A2A35;
-        border-radius: 10px;
-        background-color: #16161D !important;
-    }
+.stButton > button:hover,
+.stFormSubmitButton > button:hover {
+    background-color: #B20710 !important;
+    color: #FFFFFF !important;
+}
 
-    table {
-        color: #FFFFFF !important;
-    }
+div[data-testid="stMetric"] {
+    background: #16161D !important;
+    border: 1px solid #2A2A35 !important;
+    padding: 1rem !important;
+    border-radius: 12px !important;
+}
 
-    hr {
-        border-color: #2A2A35;
-    }
+div[data-testid="stMetricLabel"] {
+    color: #D1D5DB !important;
+}
+
+div[data-testid="stMetricValue"] {
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+}
+
+div[data-testid="stDataFrame"] {
+    border: 1px solid #2A2A35 !important;
+    border-radius: 10px !important;
+    background-color: #16161D !important;
+}
+
+table,
+thead,
+tbody,
+tr,
+td,
+th {
+    color: #FFFFFF !important;
+}
+
+hr {
+    border-color: #2A2A35 !important;
+}
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
