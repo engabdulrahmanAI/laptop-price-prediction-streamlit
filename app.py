@@ -64,18 +64,130 @@ CUSTOM_CSS = """
 <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
+    header {background: transparent !important;}
 
     html, body, [class*="css"] {
         font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
     }
 
+    [data-testid="stAppViewContainer"] {
+        background-color: #0B0B0F !important;
+        color: #FFFFFF !important;
+    }
+
+    .stApp {
+        background-color: #0B0B0F !important;
+        color: #FFFFFF !important;
+    }
+
     .main {
-        background-color: #0B0B0F;
+        background-color: #0B0B0F !important;
     }
 
     .block-container {
         padding-top: 2rem;
         padding-bottom: 3rem;
+        background-color: #0B0B0F !important;
+    }
+
+    [data-testid="stHeader"] {
+        background: #0B0B0F !important;
+    }
+
+    [data-testid="stToolbar"] {
+        right: 1rem;
+    }
+
+    section[data-testid="stSidebar"] {
+        background-color: #0B0B0F !important;
+        border-right: 1px solid #2A2A35;
+    }
+
+    section[data-testid="stSidebar"] * {
+        color: #FFFFFF !important;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: #FFFFFF !important;
+        font-weight: 800 !important;
+    }
+
+    p, span, label {
+        color: #FFFFFF !important;
+    }
+
+    div, li {
+        color: #D1D5DB;
+    }
+
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] li,
+    [data-testid="stCaptionContainer"],
+    .stCaption {
+        color: #D1D5DB !important;
+    }
+
+    [data-testid="stTabs"] {
+        background-color: #0B0B0F !important;
+    }
+
+    [data-testid="stTabs"] button {
+        color: #D1D5DB !important;
+        background: transparent !important;
+    }
+
+    [data-testid="stTabs"] button[aria-selected="true"] {
+        color: #E50914 !important;
+        border-bottom: 2px solid #E50914 !important;
+    }
+
+    .stSelectbox label, .stSlider label, .stNumberInput label, .stTextInput label,
+    .stFileUploader label, .stRadio label, .stMultiSelect label {
+        color: #FFFFFF !important;
+        font-weight: 700;
+    }
+
+    div[data-baseweb="select"] > div,
+    div[data-testid="stNumberInput"] input,
+    div[data-testid="stTextInput"] input,
+    textarea {
+        background-color: #16161D !important;
+        color: #FFFFFF !important;
+        border: 1px solid #2A2A35 !important;
+    }
+
+    .stButton > button, .stFormSubmitButton > button {
+        background-color: #E50914 !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        border-radius: 8px;
+        font-weight: 800;
+        padding: 0.65rem 1rem;
+    }
+
+    .stButton > button:hover, .stFormSubmitButton > button:hover {
+        background-color: #B20710 !important;
+        color: #FFFFFF !important;
+    }
+
+    div[data-testid="stMetric"] {
+        background: #16161D;
+        border: 1px solid #2A2A35;
+        padding: 1rem;
+        border-radius: 12px;
+    }
+
+    div[data-testid="stMetricLabel"] {
+        color: #D1D5DB !important;
+    }
+
+    div[data-testid="stMetricValue"] {
+        color: #FFFFFF !important;
+        font-weight: 800;
+    }
+
+    div[data-testid="stMetricDelta"] {
+        color: #E50914 !important;
     }
 
     .hero {
@@ -84,23 +196,27 @@ CUSTOM_CSS = """
         border-radius: 16px;
         margin-bottom: 1.6rem;
         border: 1px solid #2A2A35;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.40);
     }
+
     .hero h1 {
-        color: #FFFFFF;
+        color: #FFFFFF !important;
         font-size: 2.4rem;
         font-weight: 800;
         margin-bottom: 0.5rem;
     }
+
     .hero p {
-        color: #D1D5DB;
+        color: #D1D5DB !important;
         font-size: 1.05rem;
-        max-width: 800px;
+        max-width: 850px;
         line-height: 1.6;
     }
+
     .hero .tagline {
         display: inline-block;
-        color: #E50914;
-        font-weight: 700;
+        color: #E50914 !important;
+        font-weight: 800;
         letter-spacing: 0.08em;
         text-transform: uppercase;
         font-size: 0.82rem;
@@ -114,24 +230,30 @@ CUSTOM_CSS = """
         padding: 1.25rem 1.35rem;
         text-align: left;
         box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+        min-height: 125px;
     }
+
     .kpi-label {
-        color: #D1D5DB;
+        color: #D1D5DB !important;
         font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 0.06em;
         margin-bottom: 0.35rem;
+        font-weight: 700;
     }
+
     .kpi-value {
-        color: #FFFFFF;
-        font-size: 1.75rem;
-        font-weight: 800;
+        color: #FFFFFF !important;
+        font-size: 1.65rem;
+        font-weight: 900;
+        line-height: 1.2;
     }
+
     .kpi-sub {
-        color: #E50914;
+        color: #E50914 !important;
         font-size: 0.8rem;
-        margin-top: 0.25rem;
-        font-weight: 600;
+        margin-top: 0.35rem;
+        font-weight: 700;
     }
 
     .section-card {
@@ -140,17 +262,23 @@ CUSTOM_CSS = """
         border-radius: 12px;
         padding: 1.5rem 1.6rem;
         margin-bottom: 1rem;
-        color: #D1D5DB;
-        line-height: 1.6;
+        color: #D1D5DB !important;
+        line-height: 1.8;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.25);
     }
+
+    .section-card * {
+        color: #D1D5DB !important;
+    }
+
     .section-card b {
-        color: #FFFFFF;
+        color: #FFFFFF !important;
     }
 
     .chart-note {
-        color: #D1D5DB;
-        font-size: 0.88rem;
-        margin-top: -0.4rem;
+        color: #D1D5DB !important;
+        font-size: 0.92rem;
+        margin-top: 0.4rem;
         margin-bottom: 1rem;
         padding-left: 0.1rem;
     }
@@ -161,29 +289,28 @@ CUSTOM_CSS = """
         padding: 2.2rem;
         text-align: center;
         border: 1px solid #E50914;
+        box-shadow: 0 8px 25px rgba(229,9,20,0.20);
     }
+
     .pred-card .price {
         font-size: 2.8rem;
-        font-weight: 800;
-        color: #FFFFFF;
+        font-weight: 900;
+        color: #FFFFFF !important;
     }
+
     .pred-card .label {
-        color: #D1D5DB;
+        color: #D1D5DB !important;
         font-size: 0.9rem;
         margin-bottom: 0.6rem;
         text-transform: uppercase;
         letter-spacing: 0.06em;
     }
+
     .pred-card .modelname {
-        color: #E50914;
-        font-weight: 700;
+        color: #E50914 !important;
+        font-weight: 800;
         font-size: 0.95rem;
         margin-top: 0.6rem;
-    }
-
-    div[data-testid="stMetricValue"] {
-        font-size: 1.6rem;
-        color: #FFFFFF;
     }
 
     .badge {
@@ -191,59 +318,24 @@ CUSTOM_CSS = """
         padding: 0.3rem 0.8rem;
         border-radius: 999px;
         font-size: 0.78rem;
-        font-weight: 700;
+        font-weight: 800;
         margin-right: 0.4rem;
     }
+
     .badge-best {
         background: rgba(229, 9, 20, 0.15);
-        color: #E50914;
+        color: #E50914 !important;
         border: 1px solid #E50914;
-    }
-
-    section[data-testid="stSidebar"] {
-        background-color: #0B0B0F;
-        border-right: 1px solid #2A2A35;
-    }
-
-    .stButton > button, .stFormSubmitButton > button {
-        background-color: #E50914;
-        color: #FFFFFF;
-        border: none;
-        border-radius: 8px;
-        font-weight: 700;
-    }
-    .stButton > button:hover, .stFormSubmitButton > button:hover {
-        background-color: #B20710;
-        color: #FFFFFF;
-    }
-
-    /* Improve text readability across Streamlit widgets */
-    h1, h2, h3, h4, h5, h6, p, span, label, div {
-        color: #FFFFFF;
-    }
-
-    div[data-testid="stMarkdownContainer"] p,
-    div[data-testid="stMarkdownContainer"] li {
-        color: #D1D5DB;
-    }
-
-    .stSelectbox label, .stSlider label, .stNumberInput label, .stTextInput label,
-    .stFileUploader label, .stRadio label {
-        color: #FFFFFF !important;
-        font-weight: 600;
-    }
-
-    div[data-baseweb="select"] > div,
-    div[data-testid="stNumberInput"] input,
-    div[data-testid="stTextInput"] input {
-        background-color: #16161D !important;
-        color: #FFFFFF !important;
-        border-color: #2A2A35 !important;
     }
 
     div[data-testid="stDataFrame"] {
         border: 1px solid #2A2A35;
         border-radius: 10px;
+        background-color: #16161D !important;
+    }
+
+    table {
+        color: #FFFFFF !important;
     }
 
     hr {
