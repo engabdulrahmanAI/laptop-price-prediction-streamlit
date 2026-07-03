@@ -1,14 +1,22 @@
-import streamlit as st
-import pandas as pd
+import os
 import numpy as np
+import pandas as pd
+import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+from sklearn.base import clone, BaseEstimator, RegressorMixin
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import (
+    RandomForestRegressor,
+    GradientBoostingRegressor,
+    ExtraTreesRegressor,
+    HistGradientBoostingRegressor,
+)
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.inspection import permutation_importance
 
 st.set_page_config(
     page_title="Laptop Price Prediction",
@@ -27,7 +35,7 @@ CUSTOM_CSS = """
     }
 
     .main {
-        background-color: #0f1116;
+        background-color: #0B0B0F;
     }
 
     .block-container {
@@ -36,108 +44,157 @@ CUSTOM_CSS = """
     }
 
     .hero {
-        background: linear-gradient(135deg, #1f2b45 0%, #2c3e6b 50%, #4a2c6b 100%);
-        padding: 2.6rem 2.4rem;
-        border-radius: 18px;
+        background: linear-gradient(135deg, #16161D 0%, #1F1F2A 60%, #2A0A0E 100%);
+        padding: 2.8rem 2.6rem;
+        border-radius: 16px;
         margin-bottom: 1.6rem;
-        border: 1px solid rgba(255,255,255,0.06);
+        border: 1px solid #2A2A35;
     }
     .hero h1 {
-        color: #ffffff;
-        font-size: 2.3rem;
+        color: #FFFFFF;
+        font-size: 2.4rem;
         font-weight: 800;
-        margin-bottom: 0.4rem;
+        margin-bottom: 0.5rem;
     }
     .hero p {
-        color: #cfd6e6;
+        color: #D1D5DB;
         font-size: 1.05rem;
-        max-width: 780px;
-        line-height: 1.55;
+        max-width: 800px;
+        line-height: 1.6;
+    }
+    .hero .tagline {
+        display: inline-block;
+        color: #E50914;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.82rem;
+        margin-bottom: 0.8rem;
     }
 
     .kpi-card {
-        background: #161a24;
-        border: 1px solid rgba(255,255,255,0.07);
-        border-radius: 14px;
-        padding: 1.2rem 1.3rem;
+        background: #16161D;
+        border: 1px solid #2A2A35;
+        border-radius: 12px;
+        padding: 1.25rem 1.35rem;
         text-align: left;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.35);
     }
     .kpi-label {
-        color: #9aa4b8;
-        font-size: 0.82rem;
+        color: #D1D5DB;
+        font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 0.06em;
         margin-bottom: 0.35rem;
     }
     .kpi-value {
-        color: #ffffff;
-        font-size: 1.7rem;
-        font-weight: 700;
+        color: #FFFFFF;
+        font-size: 1.75rem;
+        font-weight: 800;
     }
     .kpi-sub {
-        color: #6bd0a3;
+        color: #E50914;
         font-size: 0.8rem;
-        margin-top: 0.2rem;
+        margin-top: 0.25rem;
+        font-weight: 600;
     }
 
     .section-card {
-        background: #161a24;
-        border: 1px solid rgba(255,255,255,0.07);
-        border-radius: 14px;
+        background: #16161D;
+        border: 1px solid #2A2A35;
+        border-radius: 12px;
         padding: 1.5rem 1.6rem;
         margin-bottom: 1rem;
+        color: #D1D5DB;
+        line-height: 1.6;
+    }
+    .section-card b {
+        color: #FFFFFF;
+    }
+
+    .chart-note {
+        color: #D1D5DB;
+        font-size: 0.88rem;
+        margin-top: -0.4rem;
+        margin-bottom: 1rem;
+        padding-left: 0.1rem;
     }
 
     .pred-card {
-        background: linear-gradient(135deg, #1e3a2e 0%, #16593f 100%);
-        border-radius: 18px;
-        padding: 2rem;
+        background: linear-gradient(135deg, #1F1F2A 0%, #2A0A0E 100%);
+        border-radius: 16px;
+        padding: 2.2rem;
         text-align: center;
-        border: 1px solid rgba(255,255,255,0.08);
+        border: 1px solid #E50914;
     }
     .pred-card .price {
-        font-size: 2.6rem;
+        font-size: 2.8rem;
         font-weight: 800;
-        color: #ffffff;
+        color: #FFFFFF;
     }
     .pred-card .label {
-        color: #bfe8d4;
-        font-size: 0.95rem;
+        color: #D1D5DB;
+        font-size: 0.9rem;
         margin-bottom: 0.6rem;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.06em;
+    }
+    .pred-card .modelname {
+        color: #E50914;
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin-top: 0.6rem;
     }
 
     div[data-testid="stMetricValue"] {
         font-size: 1.6rem;
+        color: #FFFFFF;
     }
 
     .badge {
         display: inline-block;
-        padding: 0.25rem 0.7rem;
+        padding: 0.3rem 0.8rem;
         border-radius: 999px;
         font-size: 0.78rem;
-        font-weight: 600;
+        font-weight: 700;
         margin-right: 0.4rem;
     }
     .badge-best {
-        background: rgba(107, 208, 163, 0.15);
-        color: #6bd0a3;
-        border: 1px solid rgba(107,208,163,0.35);
+        background: rgba(229, 9, 20, 0.15);
+        color: #E50914;
+        border: 1px solid #E50914;
+    }
+
+    section[data-testid="stSidebar"] {
+        background-color: #0B0B0F;
+        border-right: 1px solid #2A2A35;
+    }
+
+    .stButton > button, .stFormSubmitButton > button {
+        background-color: #E50914;
+        color: #FFFFFF;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+    }
+    .stButton > button:hover, .stFormSubmitButton > button:hover {
+        background-color: #B20710;
+        color: #FFFFFF;
+    }
+
+    hr {
+        border-color: #2A2A35;
     }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-NUMERIC_COLS = ["Inches", "Ram", "Weight", "Memory_GB"]
-CATEGORICAL_COLS = ["Company", "TypeName", "ScreenResolution", "OpSys", "Cpu_Brand", "Gpu_Brand"]
+DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "laptopData.csv")
 
 
 @st.cache_data(show_spinner=False)
-def load_raw_data(uploaded_file):
-    df = pd.read_csv(uploaded_file)
-    return df
+def load_raw_data(source):
+    return pd.read_csv(source)
 
 
 def convert_memory_to_gb(value):
@@ -214,6 +271,58 @@ def clean_data(df_raw):
     return df.reset_index(drop=True), stats
 
 
+def build_model_registry():
+    return {
+        "Linear Regression": {"model": LinearRegression(), "scaled": True, "family": "Linear"},
+        "Ridge Regression": {"model": Ridge(alpha=1.0, random_state=42), "scaled": True, "family": "Linear"},
+        "Lasso Regression": {"model": Lasso(alpha=0.001, random_state=42, max_iter=10000), "scaled": True, "family": "Linear"},
+        "Decision Tree": {
+            "model": DecisionTreeRegressor(max_depth=12, min_samples_split=4, min_samples_leaf=2, random_state=42),
+            "scaled": False, "family": "Tree",
+        },
+        "Random Forest": {
+            "model": RandomForestRegressor(
+                n_estimators=300, max_depth=20, min_samples_split=4, min_samples_leaf=2,
+                random_state=42, n_jobs=-1,
+            ),
+            "scaled": False, "family": "Ensemble",
+        },
+        "Gradient Boosting": {
+            "model": GradientBoostingRegressor(
+                n_estimators=300, max_depth=4, min_samples_split=4, min_samples_leaf=2,
+                learning_rate=0.05, random_state=42,
+            ),
+            "scaled": False, "family": "Ensemble",
+        },
+        "Extra Trees": {
+            "model": ExtraTreesRegressor(
+                n_estimators=300, max_depth=20, min_samples_split=4, min_samples_leaf=2,
+                random_state=42, n_jobs=-1,
+            ),
+            "scaled": False, "family": "Ensemble",
+        },
+        "HistGradientBoosting": {
+            "model": HistGradientBoostingRegressor(max_depth=8, learning_rate=0.08, max_iter=300, random_state=42),
+            "scaled": False, "family": "Ensemble",
+        },
+    }
+
+
+class FittedModelWrapper(BaseEstimator, RegressorMixin):
+    def __init__(self, model, is_log):
+        self.model = model
+        self.is_log = is_log
+
+    def fit(self, X, y=None):
+        return self
+
+    def predict(self, X):
+        pred = self.model.predict(X)
+        if self.is_log:
+            pred = np.expm1(pred)
+        return np.clip(pred, a_min=0, a_max=None)
+
+
 @st.cache_resource(show_spinner=False)
 def train_models(df):
     X = df.drop("Price", axis=1)
@@ -224,49 +333,80 @@ def train_models(df):
         X_encoded, y, test_size=0.2, random_state=42
     )
 
-    rf_model = RandomForestRegressor(random_state=42)
-    rf_model.fit(X_train, y_train)
-    y_pred_rf = rf_model.predict(X_test)
-
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
-    pca = PCA(n_components=0.95)
-    X_train_pca = pca.fit_transform(X_train_scaled)
-    X_test_pca = pca.transform(X_test_scaled)
 
-    lr_model = LinearRegression()
-    lr_model.fit(X_train_pca, y_train)
-    y_pred_lr = lr_model.predict(X_test_pca)
+    y_train_log = np.log1p(y_train)
 
-    def metrics(y_true, y_pred):
-        mae = mean_absolute_error(y_true, y_pred)
-        mse = mean_squared_error(y_true, y_pred)
-        rmse = np.sqrt(mse)
-        r2 = r2_score(y_true, y_pred)
-        return {"MAE": mae, "MSE": mse, "RMSE": rmse, "R2 Score": r2}
+    registry = build_model_registry()
+    rows = []
+    trained = {}
 
-    results = {
-        "Linear Regression": metrics(y_test, y_pred_lr),
-        "Random Forest": metrics(y_test, y_pred_rf),
-    }
+    for name, cfg in registry.items():
+        for target_mode in ["Raw", "Log"]:
+            model = clone(cfg["model"])
+            X_tr = X_train_scaled if cfg["scaled"] else X_train
+            X_te = X_test_scaled if cfg["scaled"] else X_test
+            y_tr = y_train_log if target_mode == "Log" else y_train
+
+            model.fit(X_tr, y_tr)
+            wrapper = FittedModelWrapper(model, is_log=(target_mode == "Log"))
+            pred = wrapper.predict(X_te)
+
+            mae = mean_absolute_error(y_test, pred)
+            mse = mean_squared_error(y_test, pred)
+            rmse = np.sqrt(mse)
+            r2 = r2_score(y_test, pred)
+
+            key = f"{name} ({target_mode} Target)"
+            rows.append({
+                "Key": key, "Model": name, "Target": target_mode, "Family": cfg["family"],
+                "MAE": mae, "RMSE": rmse, "R2 Score": r2,
+            })
+            trained[key] = {
+                "wrapper": wrapper, "scaled": cfg["scaled"], "is_log": target_mode == "Log",
+                "pred": pred, "family": cfg["family"], "model_name": name,
+            }
+
+    results_df = pd.DataFrame(rows).sort_values(
+        by=["R2 Score", "RMSE"], ascending=[False, True]
+    ).reset_index(drop=True)
+
+    best_key = results_df.iloc[0]["Key"]
+    best = trained[best_key]
+
+    X_test_for_best = X_test_scaled if best["scaled"] else X_test
+    try:
+        perm = permutation_importance(
+            best["wrapper"], X_test_for_best, y_test,
+            scoring="r2", n_repeats=8, random_state=42, n_jobs=-1,
+        )
+        importances = pd.Series(perm.importances_mean, index=X_encoded.columns)
+    except Exception:
+        importances = None
 
     return {
-        "rf_model": rf_model,
-        "lr_model": lr_model,
+        "results_df": results_df,
+        "trained": trained,
+        "best_key": best_key,
+        "best_model_name": results_df.iloc[0]["Model"],
+        "best_target": results_df.iloc[0]["Target"],
+        "best_family": results_df.iloc[0]["Family"],
+        "best_r2": results_df.iloc[0]["R2 Score"],
+        "best_mae": results_df.iloc[0]["MAE"],
+        "best_rmse": results_df.iloc[0]["RMSE"],
+        "best_wrapper": best["wrapper"],
+        "best_scaled": best["scaled"],
         "scaler": scaler,
-        "pca": pca,
         "X_columns": X_encoded.columns,
         "X_train": X_train,
         "X_test": X_test,
         "y_train": y_train,
         "y_test": y_test,
-        "y_pred_rf": y_pred_rf,
-        "y_pred_lr": y_pred_lr,
-        "results": results,
-        "pca_components_before": X_train.shape[1],
-        "pca_components_after": X_train_pca.shape[1],
-        "pca_variance": float(pca.explained_variance_ratio_.sum()),
+        "best_pred": best["pred"],
+        "importances": importances,
+        "n_features": X_train.shape[1],
     }
 
 
@@ -284,10 +424,64 @@ def kpi_card(label, value, sub=None):
     )
 
 
+def best_model_badge(name, target, r2):
+    st.markdown(
+        f"""
+        <span class="badge badge-best">🏆 Best Model: {name} ({target} Target) · R² {r2:.3f}</span>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def family_explanation(family, target, model_name):
+    if family == "Ensemble":
+        base = (
+            f"**{model_name}** combines many decision trees, which lets it capture non-linear "
+            "relationships and interactions between specifications (e.g. how RAM and CPU brand "
+            "jointly affect price) that a single linear equation cannot represent."
+        )
+    elif family == "Tree":
+        base = (
+            f"**{model_name}** splits the data into decision rules, which can capture non-linear "
+            "pricing patterns but is more prone to overfitting than an ensemble of trees."
+        )
+    else:
+        base = (
+            f"**{model_name}** assumes a mostly linear relationship between specifications and price. "
+            "It performed competitively, suggesting the dataset has a fairly linear pricing structure "
+            "for this configuration."
+        )
+    if target == "Log":
+        base += (
+            " Training on the **log-transformed price** reduced the impact of a few very expensive "
+            "laptops on the loss function, which helped the model fit the majority of typical-priced "
+            "laptops more accurately."
+        )
+    return base
+
+
 st.sidebar.markdown("## 💻 Laptop Price AI")
 st.sidebar.markdown("---")
 
-uploaded_file = st.sidebar.file_uploader("Upload laptopData.csv", type=["csv"])
+df_raw = None
+data_source = None
+
+if os.path.exists(DATA_PATH):
+    df_raw = load_raw_data(DATA_PATH)
+    data_source = "built-in"
+    st.sidebar.success("✅ Using built-in dataset (laptopData.csv)")
+    fallback_file = st.sidebar.file_uploader("Replace with a different laptopData.csv (optional)", type=["csv"])
+    if fallback_file is not None:
+        df_raw = load_raw_data(fallback_file)
+        data_source = "uploaded"
+        st.sidebar.info("📤 Using uploaded dataset instead of the built-in file")
+else:
+    st.sidebar.warning("⚠️ Built-in laptopData.csv not found in the app folder.")
+    fallback_file = st.sidebar.file_uploader("Upload laptopData.csv", type=["csv"])
+    if fallback_file is not None:
+        df_raw = load_raw_data(fallback_file)
+        data_source = "uploaded"
+        st.sidebar.info("📤 Using uploaded dataset")
 
 PAGES = [
     "🏠 Home",
@@ -301,38 +495,44 @@ PAGES = [
     "📝 Conclusion",
 ]
 page = st.sidebar.radio("Navigate", PAGES, label_visibility="collapsed")
-
 st.sidebar.markdown("---")
-st.sidebar.caption("Random Forest Regressor is the selected best model based on R² score and error metrics.")
 
-if uploaded_file is None:
+if df_raw is None:
     st.markdown(
         """
         <div class="hero">
+            <div class="tagline">Machine Learning Portfolio Project</div>
             <h1>💻 Laptop Price Prediction using Machine Learning</h1>
-            <p>Upload <b>laptopData.csv</b> from the sidebar to explore the dataset, review the cleaning
-            pipeline, run the exploratory analysis, train the models, and predict laptop prices.</p>
+            <p>Place <b>laptopData.csv</b> in the app folder so it loads automatically, or upload it
+            from the sidebar, to explore the dataset, review the cleaning pipeline, compare models,
+            and predict laptop prices.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.warning("⚠️ No dataset uploaded yet. Please upload **laptopData.csv** from the sidebar to continue.")
+    st.warning("⚠️ No dataset available yet. Add **laptopData.csv** to the app folder or upload it from the sidebar.")
     st.stop()
 
-df_raw = load_raw_data(uploaded_file)
 df_clean, clean_stats = clean_data(df_raw)
 artifacts = train_models(df_clean)
+results_df = artifacts["results_df"]
 
-results_df = pd.DataFrame(artifacts["results"]).T.reset_index().rename(columns={"index": "Model"})
+st.sidebar.caption(
+    f"🏆 Best model: **{artifacts['best_model_name']}** ({artifacts['best_target']} target) · "
+    f"R² {artifacts['best_r2']:.3f}"
+)
+st.sidebar.caption(f"Data source: {'Built-in file' if data_source == 'built-in' else 'Uploaded file'}")
 
 if page == "🏠 Home":
     st.markdown(
         """
         <div class="hero">
+            <div class="tagline">Machine Learning Portfolio Project</div>
             <h1>💻 Laptop Price Prediction using Machine Learning</h1>
             <p>This project predicts laptop prices from their technical specifications using supervised
             machine learning. It supports buyers, sellers, and retailers who need a fast, data-driven
-            estimate of a fair laptop price instead of relying on guesswork.</p>
+            estimate of a fair laptop price instead of relying on guesswork. The dataset loads
+            automatically from <b>laptopData.csv</b> bundled with the app.</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -359,11 +559,11 @@ if page == "🏠 Home":
     with c2:
         kpi_card("Target Variable", "Price")
     with c3:
-        kpi_card("Best Model", "Random Forest")
+        kpi_card("Best Model", artifacts["best_model_name"], sub=f"{artifacts['best_target']} target")
     with c4:
-        kpi_card("Best R² Score", f"{artifacts['results']['Random Forest']['R2 Score']:.3f}")
+        kpi_card("Best R² Score", f"{artifacts['best_r2']:.3f}")
     with c5:
-        kpi_card("Best MAE", f"{artifacts['results']['Random Forest']['MAE']:.2f}")
+        kpi_card("Best MAE", f"{artifacts['best_mae']:.2f}", sub=f"RMSE {artifacts['best_rmse']:.2f}")
 
     st.markdown("#### Why This Matters")
     st.markdown(
@@ -437,7 +637,7 @@ elif page == "🧹 Data Cleaning":
         8. Extracted <code>Cpu_Brand</code> and <code>Gpu_Brand</code> from the CPU/GPU text<br>
         9. Removed price outliers using the IQR method<br>
         10. Encoded categorical columns using one-hot encoding<br>
-        11. Scaled features and applied PCA for the Linear Regression model
+        11. Scaled features for linear-family models (Linear/Ridge/Lasso Regression)
         </div>
         """,
         unsafe_allow_html=True,
@@ -488,55 +688,64 @@ elif page == "🔍 EDA":
             fig = px.bar(
                 df_clean["Company"].value_counts().reset_index(),
                 x="Company", y="count", title="Laptop Count by Company",
-                color_discrete_sequence=["#6bd0a3"],
+                color_discrete_sequence=["#E50914"],
             )
             st.plotly_chart(fig, use_container_width=True)
+            st.markdown('<div class="chart-note">Shows which brands are most represented in the dataset.</div>', unsafe_allow_html=True)
         with c2:
             fig = px.bar(
                 df_clean["TypeName"].value_counts().reset_index(),
                 x="TypeName", y="count", title="Laptop Count by Type",
-                color_discrete_sequence=["#7c9fe0"],
+                color_discrete_sequence=["#D1D5DB"],
             )
             st.plotly_chart(fig, use_container_width=True)
+            st.markdown('<div class="chart-note">Shows how laptop categories (Notebook, Gaming, etc.) are distributed.</div>', unsafe_allow_html=True)
 
         fig = px.histogram(df_clean, x="Price", nbins=30, title="Price Distribution",
-                            color_discrete_sequence=["#c084e8"])
+                            color_discrete_sequence=["#E50914"])
         st.plotly_chart(fig, use_container_width=True)
+        st.markdown('<div class="chart-note">Most laptops fall in the lower-to-mid price range after outlier removal.</div>', unsafe_allow_html=True)
 
     with tab2:
         c1, c2 = st.columns(2)
         with c1:
             avg_price_company = df_clean.groupby("Company")["Price"].mean().sort_values(ascending=False).reset_index()
             fig = px.bar(avg_price_company, x="Company", y="Price", title="Average Price by Company",
-                         color_discrete_sequence=["#6bd0a3"])
+                         color_discrete_sequence=["#E50914"])
             st.plotly_chart(fig, use_container_width=True)
+            st.markdown('<div class="chart-note">Brand alone shifts the average price noticeably.</div>', unsafe_allow_html=True)
         with c2:
             avg_price_ram = df_clean.groupby("Ram")["Price"].mean().sort_index().reset_index()
             fig = px.bar(avg_price_ram, x="Ram", y="Price", title="Average Price by RAM (GB)",
-                         color_discrete_sequence=["#7c9fe0"])
+                         color_discrete_sequence=["#D1D5DB"])
             st.plotly_chart(fig, use_container_width=True)
+            st.markdown('<div class="chart-note">Higher RAM configurations trend toward higher prices.</div>', unsafe_allow_html=True)
 
         c3, c4 = st.columns(2)
         with c3:
             avg_price_cpu = df_clean.groupby("Cpu_Brand")["Price"].mean().sort_values(ascending=False).reset_index()
             fig = px.bar(avg_price_cpu, x="Cpu_Brand", y="Price", title="Average Price by CPU Brand",
-                         color_discrete_sequence=["#c084e8"])
+                         color_discrete_sequence=["#E50914"])
             st.plotly_chart(fig, use_container_width=True)
+            st.markdown('<div class="chart-note">CPU brand/tier is a strong price signal.</div>', unsafe_allow_html=True)
         with c4:
             avg_price_gpu = df_clean.groupby("Gpu_Brand")["Price"].mean().sort_values(ascending=False).reset_index()
             fig = px.bar(avg_price_gpu, x="Gpu_Brand", y="Price", title="Average Price by GPU Brand",
-                         color_discrete_sequence=["#e0a37c"])
+                         color_discrete_sequence=["#D1D5DB"])
             st.plotly_chart(fig, use_container_width=True)
+            st.markdown('<div class="chart-note">Dedicated GPU brands typically command higher prices.</div>', unsafe_allow_html=True)
 
         c5, c6 = st.columns(2)
         with c5:
             fig = px.scatter(df_clean, x="Memory_GB", y="Price", title="Memory (GB) vs Price",
-                              opacity=0.6, color_discrete_sequence=["#6bd0a3"])
+                              opacity=0.6, color_discrete_sequence=["#E50914"])
             st.plotly_chart(fig, use_container_width=True)
+            st.markdown('<div class="chart-note">More total storage is loosely associated with higher prices.</div>', unsafe_allow_html=True)
         with c6:
             fig = px.scatter(df_clean, x="Weight", y="Price", title="Weight vs Price",
-                              opacity=0.6, color_discrete_sequence=["#7c9fe0"])
+                              opacity=0.6, color_discrete_sequence=["#D1D5DB"])
             st.plotly_chart(fig, use_container_width=True)
+            st.markdown('<div class="chart-note">Weight alone is a weaker predictor than RAM or brand.</div>', unsafe_allow_html=True)
 
     with tab3:
         numeric_df = df_clean.select_dtypes(include=[np.number])
@@ -544,9 +753,12 @@ elif page == "🔍 EDA":
         fig = px.imshow(corr, text_auto=".2f", aspect="auto", title="Correlation Heatmap (Numeric Columns)",
                          color_continuous_scale="RdBu_r")
         st.plotly_chart(fig, use_container_width=True)
+        st.markdown('<div class="chart-note">Darker red/blue cells indicate stronger linear relationships between numeric columns.</div>', unsafe_allow_html=True)
 
 elif page == "🤖 Model Training":
     st.markdown("## 🤖 Model Training")
+    best_model_badge(artifacts["best_model_name"], artifacts["best_target"], artifacts["best_r2"])
+    st.markdown("")
 
     st.markdown("#### Machine Learning Workflow")
     st.markdown(
@@ -554,44 +766,87 @@ elif page == "🤖 Model Training":
         <div class="section-card">
         1. Split the cleaned data into features (X) and target (y = Price)<br>
         2. One-hot encode categorical columns<br>
-        3. Split into training and test sets (80/20)<br>
-        4. Train <b>Random Forest Regressor</b> directly on the encoded features<br>
-        5. For <b>Linear Regression</b>, scale features with StandardScaler, then reduce dimensionality
-        with PCA (95% variance retained) before training<br>
-        6. Evaluate both models on the same test set using MAE, MSE, RMSE, and R² Score
+        3. Split into training and test sets (80/20, <code>random_state=42</code>)<br>
+        4. Scale features with StandardScaler for linear-family models (Linear, Ridge, Lasso); tree-based
+        models train on the unscaled encoded features<br>
+        5. Train each model twice: once on the raw <code>Price</code>, once on <code>log1p(Price)</code>
+        with predictions converted back using <code>expm1</code><br>
+        6. Evaluate every model/target combination on the same test set using MAE, RMSE, and R² Score<br>
+        7. Automatically select the best model by highest R² Score, breaking ties with lowest RMSE
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        kpi_card("Models Compared", f"{results_df['Model'].nunique()}", sub=f"{len(results_df)} total runs (raw + log)")
+    with c2:
+        kpi_card("Encoded Features", f"{artifacts['n_features']}")
+    with c3:
+        kpi_card("Test Split", "20%", sub="random_state=42")
+
+    st.markdown("#### Model Ranking Table")
+    display_df = results_df[["Model", "Target", "MAE", "RMSE", "R2 Score"]].copy()
+
+    def highlight_best(row):
+        if row.name == 0:
+            return ["background-color: rgba(229,9,20,0.18)"] * len(row)
+        return [""] * len(row)
+
+    styled = display_df.style.apply(highlight_best, axis=1).format(
+        {"MAE": "{:.2f}", "RMSE": "{:.2f}", "R2 Score": "{:.3f}"}
+    )
+    st.dataframe(styled, use_container_width=True, height=380)
+    st.markdown('<div class="chart-note">Top row (highlighted) is the automatically selected best model.</div>', unsafe_allow_html=True)
+
+    st.markdown("#### Model Comparison Charts")
+    plot_df = results_df.copy()
+    plot_df["Label"] = plot_df["Model"] + " (" + plot_df["Target"] + ")"
+
+    fig_r2 = px.bar(plot_df.sort_values("R2 Score"), x="R2 Score", y="Label", orientation="h",
+                     title="R² Score by Model", color="Target",
+                     color_discrete_map={"Raw": "#D1D5DB", "Log": "#E50914"})
+    st.plotly_chart(fig_r2, use_container_width=True)
+
     c1, c2 = st.columns(2)
     with c1:
-        kpi_card("Features Before PCA", artifacts["pca_components_before"])
+        fig_mae = px.bar(plot_df.sort_values("MAE"), x="MAE", y="Label", orientation="h",
+                          title="MAE by Model", color="Target",
+                          color_discrete_map={"Raw": "#D1D5DB", "Log": "#E50914"})
+        st.plotly_chart(fig_mae, use_container_width=True)
     with c2:
-        kpi_card("Features After PCA", artifacts["pca_components_after"],
-                  sub=f"{artifacts['pca_variance']*100:.1f}% variance retained")
+        fig_rmse = px.bar(plot_df.sort_values("RMSE"), x="RMSE", y="Label", orientation="h",
+                           title="RMSE by Model", color="Target",
+                           color_discrete_map={"Raw": "#D1D5DB", "Log": "#E50914"})
+        st.plotly_chart(fig_rmse, use_container_width=True)
 
-    st.markdown("#### Model Performance Comparison")
-    styled = results_df.style.format({"MAE": "{:.2f}", "MSE": "{:.2f}", "RMSE": "{:.2f}", "R2 Score": "{:.3f}"})
-    st.dataframe(styled, use_container_width=True)
+    st.markdown("#### Why the Best Model Performed Better")
+    st.markdown(
+        f'<div class="section-card">{family_explanation(artifacts["best_family"], artifacts["best_target"], artifacts["best_model_name"])}</div>',
+        unsafe_allow_html=True,
+    )
 
-    c1, c2 = st.columns(2)
-    with c1:
-        fig = px.bar(results_df, x="Model", y="R2 Score", title="R² Score by Model",
-                     color="Model", color_discrete_sequence=["#7c9fe0", "#6bd0a3"])
-        st.plotly_chart(fig, use_container_width=True)
-    with c2:
-        err_df = results_df.melt(id_vars="Model", value_vars=["MAE", "RMSE"], var_name="Metric", value_name="Value")
-        fig = px.bar(err_df, x="Metric", y="Value", color="Model", barmode="group",
-                     title="Error Metrics by Model", color_discrete_sequence=["#7c9fe0", "#6bd0a3"])
-        st.plotly_chart(fig, use_container_width=True)
-
-    st.success("✅ Random Forest Regressor achieves the higher R² score and lower error values, "
-               "making it the best model for this dataset.")
+    baseline_r2 = results_df[results_df["Model"] == "Linear Regression"]["R2 Score"].max()
+    improvement = artifacts["best_r2"] - baseline_r2
+    if improvement > 0.02:
+        st.success(
+            f"✅ The best model improves R² by {improvement:.3f} over a plain Linear Regression baseline "
+            f"({baseline_r2:.3f} → {artifacts['best_r2']:.3f})."
+        )
+    else:
+        st.info(
+            f"ℹ️ The best model's R² ({artifacts['best_r2']:.3f}) is close to the plain Linear Regression "
+            f"baseline ({baseline_r2:.3f}). This honestly reflects the dataset's structure rather than an "
+            "inflated result."
+        )
 
 elif page == "🎯 Prediction Simulator":
     st.markdown("## 🎯 Prediction Simulator")
-    st.markdown("Enter laptop specifications below to get an estimated price from the trained Random Forest model.")
+    st.markdown(
+        f"This simulator automatically uses the best trained model: "
+        f"**{artifacts['best_model_name']} ({artifacts['best_target']} target)**."
+    )
 
     companies = sorted(df_clean["Company"].dropna().unique().tolist())
     types = sorted(df_clean["TypeName"].dropna().unique().tolist())
@@ -638,12 +893,19 @@ elif page == "🎯 Prediction Simulator":
         input_encoded = input_encoded.reindex(columns=artifacts["X_columns"], fill_value=0)
 
         try:
-            prediction = artifacts["rf_model"].predict(input_encoded)[0]
+            if artifacts["best_scaled"]:
+                input_for_model = artifacts["scaler"].transform(input_encoded)
+            else:
+                input_for_model = input_encoded
+
+            prediction = artifacts["best_wrapper"].predict(input_for_model)[0]
+
             st.markdown(
                 f"""
                 <div class="pred-card">
                     <div class="label">Estimated Laptop Price</div>
                     <div class="price">{prediction:,.2f}</div>
+                    <div class="modelname">Predicted using {artifacts['best_model_name']} ({artifacts['best_target']} target)</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -652,43 +914,59 @@ elif page == "🎯 Prediction Simulator":
                 f"Based on the selected laptop specifications, the model estimates the price to be "
                 f"around **{prediction:,.2f}**."
             )
+            st.caption(
+                f"This is a data-driven estimate, not a guarantee. On the test set, "
+                f"{artifacts['best_model_name']} has a typical error (MAE) of about "
+                f"{artifacts['best_mae']:.0f} and an R² of {artifacts['best_r2']:.3f} — use the "
+                "prediction as a reference point, not an exact quote."
+            )
         except Exception as e:
             st.error(f"⚠️ Could not generate a prediction with the selected inputs. Details: {e}")
 
 elif page == "📈 Actual vs Predicted":
-    st.markdown("## 📈 Actual vs Predicted Prices — Random Forest")
+    st.markdown(f"## 📈 Actual vs Predicted Prices — {artifacts['best_model_name']}")
 
     y_test = artifacts["y_test"]
-    y_pred_rf = artifacts["y_pred_rf"]
+    y_pred_best = artifacts["best_pred"]
 
-    plot_df = pd.DataFrame({"Actual": y_test.values, "Predicted": y_pred_rf})
+    plot_df = pd.DataFrame({"Actual": y_test.values, "Predicted": y_pred_best})
     min_val = min(plot_df["Actual"].min(), plot_df["Predicted"].min())
     max_val = max(plot_df["Actual"].max(), plot_df["Predicted"].max())
 
     fig = px.scatter(plot_df, x="Actual", y="Predicted", opacity=0.6,
-                      title="Actual vs Predicted Laptop Prices", color_discrete_sequence=["#6bd0a3"])
+                      title=f"Actual vs Predicted Laptop Prices — {artifacts['best_model_name']}",
+                      color_discrete_sequence=["#E50914"])
     fig.add_trace(go.Scatter(x=[min_val, max_val], y=[min_val, max_val], mode="lines",
-                              name="Perfect Prediction", line=dict(color="#e07c7c", dash="dash")))
+                              name="Perfect Prediction", line=dict(color="#D1D5DB", dash="dash")))
     st.plotly_chart(fig, use_container_width=True)
     st.caption("Points closer to the diagonal line indicate predictions closer to the actual price.")
 
     st.markdown("#### Residual (Error) Distribution")
     residuals = plot_df["Actual"] - plot_df["Predicted"]
     fig2 = px.histogram(residuals, nbins=30, title="Prediction Error Distribution",
-                         color_discrete_sequence=["#7c9fe0"])
+                         color_discrete_sequence=["#D1D5DB"])
     fig2.update_layout(showlegend=False, xaxis_title="Actual - Predicted", yaxis_title="Count")
     st.plotly_chart(fig2, use_container_width=True)
+    st.caption("A distribution centered near zero with a tight spread indicates consistently small errors.")
 
 elif page == "⭐ Feature Importance":
-    st.markdown("## ⭐ Feature Importance — Random Forest")
+    st.markdown(f"## ⭐ Feature Importance — {artifacts['best_model_name']}")
 
-    importances = pd.Series(artifacts["rf_model"].feature_importances_, index=artifacts["X_columns"])
-    top15 = importances.sort_values(ascending=True).tail(15)
-
-    fig = px.bar(top15, x=top15.values, y=top15.index, orientation="h",
-                 title="Top 15 Most Important Features", color_discrete_sequence=["#6bd0a3"])
-    fig.update_layout(xaxis_title="Importance", yaxis_title="Feature")
-    st.plotly_chart(fig, use_container_width=True)
+    importances = artifacts["importances"]
+    if importances is None:
+        st.warning("⚠️ Feature importance could not be computed for this model configuration.")
+    else:
+        top15 = importances.sort_values(ascending=True).tail(15)
+        fig = px.bar(top15, x=top15.values, y=top15.index, orientation="h",
+                     title="Top 15 Most Important Features (Permutation Importance)",
+                     color_discrete_sequence=["#E50914"])
+        fig.update_layout(xaxis_title="Importance (drop in R² when shuffled)", yaxis_title="Feature")
+        st.plotly_chart(fig, use_container_width=True)
+        st.caption(
+            "Computed using permutation importance on the test set: each feature is shuffled and the "
+            "drop in R² measures how much the model relies on it. This works consistently across all "
+            "model types, including ones without a built-in importance score."
+        )
 
     st.markdown(
         """
@@ -703,22 +981,46 @@ elif page == "⭐ Feature Importance":
 
 elif page == "📝 Conclusion":
     st.markdown("## 📝 Conclusion")
+
+    baseline_r2 = results_df[results_df["Model"] == "Linear Regression"]["R2 Score"].max()
+    improvement = artifacts["best_r2"] - baseline_r2
+    improved_meaningfully = improvement > 0.02
+
+    if improved_meaningfully:
+        improvement_line = (
+            f"Compared to a plain Linear Regression baseline (R² {baseline_r2:.3f}), the best model "
+            f"improved R² by {improvement:.3f}, which is a real, measurable gain."
+        )
+    else:
+        improvement_line = (
+            f"Compared to a plain Linear Regression baseline (R² {baseline_r2:.3f}), the best model's "
+            f"R² of {artifacts['best_r2']:.3f} is only a small improvement, which honestly suggests this "
+            "dataset's pricing pattern is close to linear for the features available."
+        )
+
     st.markdown(
-        """
+        f"""
         <div class="section-card">
         First, I cleaned the dataset by removing empty rows, duplicated rows, unnecessary columns, and
         outliers. I also converted columns like Ram, Weight, Inches, and Memory into numeric values.
-        After that, I prepared the data by encoding text columns and scaling the features when needed.
-        Then I trained two models: Linear Regression and Random Forest Regressor. Random Forest
-        performed better because it had a higher R2 score and lower error values. This means Random
-        Forest predicted laptop prices more accurately.
+        After that, I prepared the data by encoding text columns and scaling the features for the linear
+        models. Then I trained eight different regression models, each once on the raw price and once on
+        a log-transformed price, to see which setup would perform best.
+        <br><br>
+        The best result came from <b>{artifacts['best_model_name']}</b> trained on the
+        <b>{artifacts['best_target'].lower()} price target</b>, with an R² score of
+        {artifacts['best_r2']:.3f} and an MAE of {artifacts['best_mae']:.2f}. {improvement_line}
+        This means {artifacts['best_model_name']} predicted laptop prices more accurately than the
+        simpler baseline model.
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    c1, c2 = st.columns(2)
+    c1, c2, c3 = st.columns(3)
     with c1:
-        kpi_card("Final R² Score", f"{artifacts['results']['Random Forest']['R2 Score']:.3f}", sub="Random Forest")
+        kpi_card("Final R² Score", f"{artifacts['best_r2']:.3f}", sub=artifacts["best_model_name"])
     with c2:
-        kpi_card("Final MAE", f"{artifacts['results']['Random Forest']['MAE']:.2f}", sub="Random Forest")
+        kpi_card("Final MAE", f"{artifacts['best_mae']:.2f}", sub=artifacts["best_model_name"])
+    with c3:
+        kpi_card("Final RMSE", f"{artifacts['best_rmse']:.2f}", sub=artifacts["best_model_name"])
