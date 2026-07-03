@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+import plotly.io as pio
 from sklearn.base import clone, BaseEstimator, RegressorMixin
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -24,6 +25,40 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# Make all Plotly charts readable on the dark Streamlit theme.
+pio.templates.default = "plotly_dark"
+
+
+def style_plotly(fig):
+    fig.update_layout(
+        paper_bgcolor="#0B0B0F",
+        plot_bgcolor="#16161D",
+        font=dict(color="#FFFFFF"),
+        title_font=dict(color="#FFFFFF"),
+        legend=dict(font=dict(color="#FFFFFF")),
+        margin=dict(l=20, r=20, t=70, b=40),
+        xaxis=dict(
+            gridcolor="#2A2A35",
+            zerolinecolor="#2A2A35",
+            tickfont=dict(color="#D1D5DB"),
+            title_font=dict(color="#FFFFFF"),
+        ),
+        yaxis=dict(
+            gridcolor="#2A2A35",
+            zerolinecolor="#2A2A35",
+            tickfont=dict(color="#D1D5DB"),
+            title_font=dict(color="#FFFFFF"),
+        ),
+    )
+    if hasattr(fig.layout, "coloraxis") and fig.layout.coloraxis is not None:
+        fig.update_layout(
+            coloraxis_colorbar=dict(
+                tickfont=dict(color="#D1D5DB"),
+                title_font=dict(color="#FFFFFF"),
+            )
+        )
+    return fig
 
 CUSTOM_CSS = """
 <style>
@@ -182,6 +217,35 @@ CUSTOM_CSS = """
         color: #FFFFFF;
     }
 
+    /* Improve text readability across Streamlit widgets */
+    h1, h2, h3, h4, h5, h6, p, span, label, div {
+        color: #FFFFFF;
+    }
+
+    div[data-testid="stMarkdownContainer"] p,
+    div[data-testid="stMarkdownContainer"] li {
+        color: #D1D5DB;
+    }
+
+    .stSelectbox label, .stSlider label, .stNumberInput label, .stTextInput label,
+    .stFileUploader label, .stRadio label {
+        color: #FFFFFF !important;
+        font-weight: 600;
+    }
+
+    div[data-baseweb="select"] > div,
+    div[data-testid="stNumberInput"] input,
+    div[data-testid="stTextInput"] input {
+        background-color: #16161D !important;
+        color: #FFFFFF !important;
+        border-color: #2A2A35 !important;
+    }
+
+    div[data-testid="stDataFrame"] {
+        border: 1px solid #2A2A35;
+        border-radius: 10px;
+    }
+
     hr {
         border-color: #2A2A35;
     }
@@ -219,6 +283,11 @@ def convert_memory_to_gb(value):
 def clean_data(df_raw):
     stats = {}
     df = df_raw.copy()
+
+    required_columns = {"Ram", "Weight", "Inches", "Price"}
+    missing_required = sorted(required_columns - set(df.columns))
+    if missing_required:
+        raise ValueError(f"Missing required columns in dataset: {missing_required}")
 
     stats["shape_before"] = df.shape
     stats["missing_before"] = df.isna().sum()
@@ -685,25 +754,27 @@ elif page == "🔍 EDA":
     with tab1:
         c1, c2 = st.columns(2)
         with c1:
+            company_counts = df_clean["Company"].value_counts().rename_axis("Company").reset_index(name="Count")
             fig = px.bar(
-                df_clean["Company"].value_counts().reset_index(),
-                x="Company", y="count", title="Laptop Count by Company",
+                company_counts,
+                x="Company", y="Count", title="Laptop Count by Company",
                 color_discrete_sequence=["#E50914"],
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(style_plotly(fig), use_container_width=True)
             st.markdown('<div class="chart-note">Shows which brands are most represented in the dataset.</div>', unsafe_allow_html=True)
         with c2:
+            type_counts = df_clean["TypeName"].value_counts().rename_axis("TypeName").reset_index(name="Count")
             fig = px.bar(
-                df_clean["TypeName"].value_counts().reset_index(),
-                x="TypeName", y="count", title="Laptop Count by Type",
+                type_counts,
+                x="TypeName", y="Count", title="Laptop Count by Type",
                 color_discrete_sequence=["#D1D5DB"],
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(style_plotly(fig), use_container_width=True)
             st.markdown('<div class="chart-note">Shows how laptop categories (Notebook, Gaming, etc.) are distributed.</div>', unsafe_allow_html=True)
 
         fig = px.histogram(df_clean, x="Price", nbins=30, title="Price Distribution",
                             color_discrete_sequence=["#E50914"])
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(style_plotly(fig), use_container_width=True)
         st.markdown('<div class="chart-note">Most laptops fall in the lower-to-mid price range after outlier removal.</div>', unsafe_allow_html=True)
 
     with tab2:
@@ -712,13 +783,13 @@ elif page == "🔍 EDA":
             avg_price_company = df_clean.groupby("Company")["Price"].mean().sort_values(ascending=False).reset_index()
             fig = px.bar(avg_price_company, x="Company", y="Price", title="Average Price by Company",
                          color_discrete_sequence=["#E50914"])
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(style_plotly(fig), use_container_width=True)
             st.markdown('<div class="chart-note">Brand alone shifts the average price noticeably.</div>', unsafe_allow_html=True)
         with c2:
             avg_price_ram = df_clean.groupby("Ram")["Price"].mean().sort_index().reset_index()
             fig = px.bar(avg_price_ram, x="Ram", y="Price", title="Average Price by RAM (GB)",
                          color_discrete_sequence=["#D1D5DB"])
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(style_plotly(fig), use_container_width=True)
             st.markdown('<div class="chart-note">Higher RAM configurations trend toward higher prices.</div>', unsafe_allow_html=True)
 
         c3, c4 = st.columns(2)
@@ -726,25 +797,25 @@ elif page == "🔍 EDA":
             avg_price_cpu = df_clean.groupby("Cpu_Brand")["Price"].mean().sort_values(ascending=False).reset_index()
             fig = px.bar(avg_price_cpu, x="Cpu_Brand", y="Price", title="Average Price by CPU Brand",
                          color_discrete_sequence=["#E50914"])
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(style_plotly(fig), use_container_width=True)
             st.markdown('<div class="chart-note">CPU brand/tier is a strong price signal.</div>', unsafe_allow_html=True)
         with c4:
             avg_price_gpu = df_clean.groupby("Gpu_Brand")["Price"].mean().sort_values(ascending=False).reset_index()
             fig = px.bar(avg_price_gpu, x="Gpu_Brand", y="Price", title="Average Price by GPU Brand",
                          color_discrete_sequence=["#D1D5DB"])
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(style_plotly(fig), use_container_width=True)
             st.markdown('<div class="chart-note">Dedicated GPU brands typically command higher prices.</div>', unsafe_allow_html=True)
 
         c5, c6 = st.columns(2)
         with c5:
             fig = px.scatter(df_clean, x="Memory_GB", y="Price", title="Memory (GB) vs Price",
                               opacity=0.6, color_discrete_sequence=["#E50914"])
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(style_plotly(fig), use_container_width=True)
             st.markdown('<div class="chart-note">More total storage is loosely associated with higher prices.</div>', unsafe_allow_html=True)
         with c6:
             fig = px.scatter(df_clean, x="Weight", y="Price", title="Weight vs Price",
                               opacity=0.6, color_discrete_sequence=["#D1D5DB"])
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(style_plotly(fig), use_container_width=True)
             st.markdown('<div class="chart-note">Weight alone is a weaker predictor than RAM or brand.</div>', unsafe_allow_html=True)
 
     with tab3:
@@ -752,7 +823,7 @@ elif page == "🔍 EDA":
         corr = numeric_df.corr()
         fig = px.imshow(corr, text_auto=".2f", aspect="auto", title="Correlation Heatmap (Numeric Columns)",
                          color_continuous_scale="RdBu_r")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(style_plotly(fig), use_container_width=True)
         st.markdown('<div class="chart-note">Darker red/blue cells indicate stronger linear relationships between numeric columns.</div>', unsafe_allow_html=True)
 
 elif page == "🤖 Model Training":
@@ -807,19 +878,19 @@ elif page == "🤖 Model Training":
     fig_r2 = px.bar(plot_df.sort_values("R2 Score"), x="R2 Score", y="Label", orientation="h",
                      title="R² Score by Model", color="Target",
                      color_discrete_map={"Raw": "#D1D5DB", "Log": "#E50914"})
-    st.plotly_chart(fig_r2, use_container_width=True)
+    st.plotly_chart(style_plotly(fig_r2), use_container_width=True)
 
     c1, c2 = st.columns(2)
     with c1:
         fig_mae = px.bar(plot_df.sort_values("MAE"), x="MAE", y="Label", orientation="h",
                           title="MAE by Model", color="Target",
                           color_discrete_map={"Raw": "#D1D5DB", "Log": "#E50914"})
-        st.plotly_chart(fig_mae, use_container_width=True)
+        st.plotly_chart(style_plotly(fig_mae), use_container_width=True)
     with c2:
         fig_rmse = px.bar(plot_df.sort_values("RMSE"), x="RMSE", y="Label", orientation="h",
                            title="RMSE by Model", color="Target",
                            color_discrete_map={"Raw": "#D1D5DB", "Log": "#E50914"})
-        st.plotly_chart(fig_rmse, use_container_width=True)
+        st.plotly_chart(style_plotly(fig_rmse), use_container_width=True)
 
     st.markdown("#### Why the Best Model Performed Better")
     st.markdown(
@@ -938,7 +1009,7 @@ elif page == "📈 Actual vs Predicted":
                       color_discrete_sequence=["#E50914"])
     fig.add_trace(go.Scatter(x=[min_val, max_val], y=[min_val, max_val], mode="lines",
                               name="Perfect Prediction", line=dict(color="#D1D5DB", dash="dash")))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(style_plotly(fig), use_container_width=True)
     st.caption("Points closer to the diagonal line indicate predictions closer to the actual price.")
 
     st.markdown("#### Residual (Error) Distribution")
@@ -946,7 +1017,7 @@ elif page == "📈 Actual vs Predicted":
     fig2 = px.histogram(residuals, nbins=30, title="Prediction Error Distribution",
                          color_discrete_sequence=["#D1D5DB"])
     fig2.update_layout(showlegend=False, xaxis_title="Actual - Predicted", yaxis_title="Count")
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(style_plotly(fig2), use_container_width=True)
     st.caption("A distribution centered near zero with a tight spread indicates consistently small errors.")
 
 elif page == "⭐ Feature Importance":
@@ -961,7 +1032,7 @@ elif page == "⭐ Feature Importance":
                      title="Top 15 Most Important Features (Permutation Importance)",
                      color_discrete_sequence=["#E50914"])
         fig.update_layout(xaxis_title="Importance (drop in R² when shuffled)", yaxis_title="Feature")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(style_plotly(fig), use_container_width=True)
         st.caption(
             "Computed using permutation importance on the test set: each feature is shuffled and the "
             "drop in R² measures how much the model relies on it. This works consistently across all "
