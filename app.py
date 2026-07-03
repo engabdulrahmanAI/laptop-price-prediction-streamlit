@@ -32,7 +32,7 @@ pio.templates.default = "plotly_dark"
 
 def style_plotly(fig):
     fig.update_layout(
-        paper_bgcolor="#0B0B0F",
+        paper_bgcolor="#16161D",
         plot_bgcolor="#16161D",
         font=dict(color="#FFFFFF"),
         title_font=dict(color="#FFFFFF"),
